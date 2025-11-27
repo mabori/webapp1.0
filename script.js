@@ -149,16 +149,33 @@ document.addEventListener('DOMContentLoaded', function() {
     initParticleSphere();
     
     // Audio Context erstellen beim ersten Klick/Touch
-    document.addEventListener('click', initAudioOnFirstInteraction, { once: true });
-    document.addEventListener('touchstart', initAudioOnFirstInteraction, { once: true });
+    // WICHTIG: passive: false für iOS Safari
+    document.addEventListener('click', initAudioOnFirstInteraction, { once: true, passive: false });
+    document.addEventListener('touchstart', initAudioOnFirstInteraction, { once: true, passive: false });
 });
 
-async function initAudioOnFirstInteraction() {
-    initAudioContext();
+async function initAudioOnFirstInteraction(e) {
+    // Event verhindern, falls nötig
+    if (e) {
+        e.preventDefault();
+    }
+    
+    // WICHTIG für iOS: AudioContext muss direkt im Event-Handler erstellt werden
+    if (!audioContext) {
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            isInitialized = true;
+        } catch (error) {
+            console.error('Audio Context Fehler:', error);
+            return;
+        }
+    }
+    
     // AudioContext sofort aktivieren beim ersten Interaktions-Event
-    if (audioContext && audioContext.state === 'suspended') {
+    if (audioContext.state === 'suspended') {
         try {
             await audioContext.resume();
+            console.log('AudioContext aktiviert:', audioContext.state);
         } catch (error) {
             console.error('Fehler beim Aktivieren des AudioContext:', error);
         }
@@ -350,9 +367,10 @@ function loadInstrument(instrumentKey) {
         btn.setAttribute('aria-label', `Taste ${i + 1}: ${soundName}`);
         
         // Touch und Mouse Events
-        btn.addEventListener('touchstart', handleSoundStart, { passive: true });
-        btn.addEventListener('touchend', handleSoundEnd, { passive: true });
-        btn.addEventListener('touchcancel', handleSoundEnd, { passive: true });
+        // WICHTIG: passive: false für iOS - ermöglicht preventDefault() und direkte AudioContext-Erstellung
+        btn.addEventListener('touchstart', handleSoundStart, { passive: false });
+        btn.addEventListener('touchend', handleSoundEnd, { passive: false });
+        btn.addEventListener('touchcancel', handleSoundEnd, { passive: false });
         btn.addEventListener('mousedown', handleSoundStart);
         btn.addEventListener('mouseup', handleSoundEnd);
         btn.addEventListener('mouseleave', handleSoundEnd);
@@ -366,16 +384,42 @@ async function handleSoundStart(e) {
     e.preventDefault();
     e.stopPropagation();
     
+    // WICHTIG für iOS: AudioContext muss direkt im Event-Handler erstellt werden
+    // (nicht in einer separaten Funktion, die später aufgerufen wird)
     if (!audioContext) {
-        initAudioContext();
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            isInitialized = true;
+        } catch (error) {
+            console.error('Audio Context Fehler:', error);
+            alert('Ihr Browser unterstützt keine Audio-Funktionen.');
+            return;
+        }
     }
     
-    // AudioContext aktivieren falls suspended (wichtig für mobile Geräte)
-    if (audioContext && audioContext.state === 'suspended') {
+    // AudioContext aktivieren falls suspended (wichtig für mobile Geräte, besonders iOS)
+    if (audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+            // Warte kurz, damit iOS den Context vollständig aktiviert
+            if (audioContext.state !== 'running') {
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+        } catch (error) {
+            console.error('Fehler beim Aktivieren des AudioContext:', error);
+            return;
+        }
+    }
+    
+    // Prüfen ob AudioContext jetzt bereit ist
+    if (audioContext.state !== 'running') {
+        console.warn('AudioContext ist nicht bereit:', audioContext.state);
+        // Versuche noch einmal zu aktivieren
         try {
             await audioContext.resume();
         } catch (error) {
-            console.error('Fehler beim Aktivieren des AudioContext:', error);
+            console.error('Zweiter Versuch fehlgeschlagen:', error);
+            return;
         }
     }
     
