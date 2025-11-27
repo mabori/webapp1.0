@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Soundboard - Musik Instrumente</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Fast transparenter Reiter oben rechts -->
+        <div class="top-controls">
+            <div class="instrument-tab-container">
+                <button class="instrument-tab-toggle" id="instrumentTabToggle" aria-label="Instrumente auswählen">
+                    <span class="toggle-icon">🎵</span>
+                    <span class="toggle-text" id="currentInstrumentDisplay">Piano</span>
+                </button>
+                <div class="instrument-selector-panel" id="instrumentPanel">
+                    <div class="instrument-tabs" id="instrumentTabs" role="tablist">
+                        <!-- Instrument tabs werden durch JavaScript generiert -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Konfigurationsrad -->
+            <button class="config-wheel" id="configWheel" aria-label="Tastenbelegung konfigurieren">
+                ⚙️
+            </button>
+        </div>
+
+        <!-- Modal für Tastenbelegung -->
+        <div class="modal-overlay" id="configModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚙️ Tastenbelegung konfigurieren</h2>
+                    <button class="modal-close" id="closeModal" aria-label="Schließen">×</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-info">Ziehe Sounds auf die Tasten, um die Belegung festzulegen:</p>
+                    
+                    <!-- 8 kleine Tasten-Vorlagen -->
+                    <div class="key-preview-grid" id="keyPreviewGrid">
+                        <!-- Tasten-Vorlagen werden durch JavaScript generiert -->
+                    </div>
+                    
+                    <!-- Verfügbare Sounds -->
+                    <div class="available-sounds-container">
+                        <h3>Verfügbare Sounds</h3>
+                        <div class="available-sounds" id="availableSounds">
+                            <!-- Sounds werden durch JavaScript generiert -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="resetConfig">Zurücksetzen</button>
+                    <button class="btn-primary" id="saveConfig">Speichern</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kugel aus kleinen Punkten oberhalb der Tasten -->
+        <div class="particle-sphere" id="particleSphere">
+            <canvas id="particleCanvas"></canvas>
+        </div>
+        
+        <div class="soundboard-container">
+            <div class="soundboard" id="soundboard">
+                <!-- Sound buttons werden durch JavaScript generiert -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
