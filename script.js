@@ -153,8 +153,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('touchstart', initAudioOnFirstInteraction, { once: true });
 });
 
-function initAudioOnFirstInteraction() {
+async function initAudioOnFirstInteraction() {
     initAudioContext();
+    // AudioContext sofort aktivieren beim ersten Interaktions-Event
+    if (audioContext && audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.error('Fehler beim Aktivieren des AudioContext:', error);
+        }
+    }
 }
 
 // Toggle-Button für Instrument-Reiter einrichten
@@ -354,12 +362,21 @@ function loadInstrument(instrumentKey) {
 }
 
 // Sound Start Handler
-function handleSoundStart(e) {
+async function handleSoundStart(e) {
     e.preventDefault();
     e.stopPropagation();
     
     if (!audioContext) {
         initAudioContext();
+    }
+    
+    // AudioContext aktivieren falls suspended (wichtig für mobile Geräte)
+    if (audioContext && audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.error('Fehler beim Aktivieren des AudioContext:', error);
+        }
     }
     
     const btn = e.currentTarget;
@@ -380,9 +397,26 @@ function handleSoundEnd(e) {
 }
 
 // Ton abspielen
-function playSound(soundName, instrumentKey) {
-    if (!audioContext || audioContext.state === 'suspended') {
-        audioContext.resume();
+async function playSound(soundName, instrumentKey) {
+    // Sicherstellen, dass AudioContext existiert
+    if (!audioContext) {
+        initAudioContext();
+    }
+    
+    // AudioContext aktivieren falls suspended (wichtig für mobile Geräte)
+    if (audioContext && audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.error('Fehler beim Aktivieren des AudioContext:', error);
+            return;
+        }
+    }
+    
+    // Prüfen ob AudioContext jetzt bereit ist
+    if (!audioContext || audioContext.state !== 'running') {
+        console.warn('AudioContext ist nicht bereit:', audioContext?.state);
+        return;
     }
     
     const instrument = instruments[instrumentKey];
@@ -901,8 +935,20 @@ function triggerSoundboardAnimation() {
 // Keyboard-Unterstützung (optional - nur für Desktop)
 let keyboardEnabled = false;
 
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', async (e) => {
     if (!keyboardEnabled) return;
+    
+    // AudioContext sicherstellen
+    if (!audioContext) {
+        initAudioContext();
+    }
+    if (audioContext && audioContext.state === 'suspended') {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            console.error('Fehler beim Aktivieren des AudioContext:', error);
+        }
+    }
     
     const instrument = instruments[currentInstrument];
     const sounds = Object.keys(instrument.sounds);
